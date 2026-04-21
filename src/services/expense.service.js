@@ -1,6 +1,9 @@
 const Expense = require("../models/expense.model");
 const Idempotency = require("../models/idempotency.model");
 
+// helper
+const toRupees = (paise) => paise / 100;
+
 const createExpense = async (data, idempotencyKey) => {
   try {
     if (idempotencyKey) {
@@ -8,7 +11,8 @@ const createExpense = async (data, idempotencyKey) => {
       if (existing) return existing.response;
     }
 
-    const amount = Math.round(data.amount * 100);
+    // store in paise
+    const amount = Math.round(Number(data.amount) * 100);
 
     const expense = await Expense.create({
       amount,
@@ -17,9 +21,10 @@ const createExpense = async (data, idempotencyKey) => {
       date: new Date(data.date),
     });
 
+    // return in rupees (IMPORTANT FIX)
     const response = {
-      id: expense._id,
-      amount: expense.amount,
+      id: expense._id.toString(),
+      amount: toRupees(expense.amount), // 
       category: expense.category,
       description: expense.description,
       date: expense.date,
@@ -50,9 +55,19 @@ const getExpenses = async ({ category, sort }) => {
       .sort(sortOption)
       .lean();
 
-    const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalPaise = expenses.reduce((sum, e) => sum + e.amount, 0);
 
-    return { expenses, total };
+    return {
+      expenses: expenses.map((e) => ({
+        id: e._id.toString(),
+        amount: toRupees(e.amount), 
+        category: e.category,
+        description: e.description,
+        date: e.date,
+        created_at: e.created_at,
+      })),
+      total: toRupees(totalPaise), 
+    };
   } catch (error) {
     throw new Error(error.message);
   }
