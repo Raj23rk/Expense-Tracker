@@ -3,18 +3,15 @@ const cors = require("cors");
 
 const app = express();
 
-// ✅ CORS MUST be first (before routes)
+const cors = require("cors");
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://expense-tracker-1-av8f.onrender.com"
-    ],
+    origin: "https://frontend-expense-tracker-rho.vercel.app",
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
 );
-
 app.use(express.json());
 
 // routes
